@@ -3,42 +3,64 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  Redirect
 } from "react-router-dom"
-import axios from 'axios'
-import './App.css'
+import axios from "axios"
+import "./App.css"
+import { decode } from "jsonwebtoken"
+
+let user = undefined
 
 export default function App() {
-  const [user, setUser] = useState({})
-  const [currentLogin, setCurrentLogin] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
+  const [currentLogin, setCurrentLogin] = useState("")
+  const [currentPassword, setCurrentPassword] = useState("")
 
-  const loginRequest = () => {
-    console.log(currentLogin)
-    console.log(currentPassword)
-    axios.post(`http://localhost:3228/auth/login`, {
-      login: currentLogin,
-      password: currentPassword
-    })
-      .then(res => {
-        console.log(res)
-        console.log(res.data)
-      })
-    setCurrentLogin('')
-    setCurrentPassword('')
+  const getToken = () => localStorage.getItem("token")
+  const setToken = token => localStorage.setItem("token", token)
+  const removeToken = () => localStorage.removeItem("token")
 
+  const getAndSetUser = () => {
+    const token = getToken()
+    if (token) {
+      user = decode(token)
+    }
   }
 
-  const getCurrentUser = () => {
-    axios.get(`http://localhost:3228/auth/get-current-user`, {
-      login: currentLogin,
-      password: currentPassword
-    })
-      .then(res => {
-        console.log(res)
-        setUser(undefined)
+  useEffect(() => {
+    getAndSetUser()
+  })
+
+  const loginRequest = e => {
+    e.preventDefault()
+    axios
+      .post(`http://localhost:3228/auth/login`, {
+        login: currentLogin,
+        password: currentPassword
       })
+      .then(res => {
+        setToken(res.data.token)
+        getAndSetUser()
+      })
+    setCurrentLogin("")
+    setCurrentPassword("")
   }
+
+  const logout = () => {
+    removeToken()
+    user = undefined
+  }
+
+  // const getCurrentUser = () => {
+  //   axios
+  //     .get(`http://localhost:3228/auth/get-current-user`, {
+  //       headers: { Authorization: getToken() }
+  //     })
+  //     .then(res => {
+  //       console.log(res)
+  //       setUser(undefined)
+  //     })
+  // }
 
   const handleLogin = e => {
     setCurrentLogin(e.target.value)
@@ -48,18 +70,15 @@ export default function App() {
     setCurrentPassword(e.target.value)
   }
 
-  const sendRequest = () => {
-
-  }
+  const sendRequest = () => {}
 
   const logoutRequest = event => {
-    event.preventDefault();
+    event.preventDefault()
 
-    axios.delete(`http://localhost:3228/auth/logout`)
-      .then(res => {
-        console.log(res);
-        console.log(res.data);
-      })
+    axios.delete(`http://localhost:3228/auth/logout`).then(res => {
+      console.log(res)
+      console.log(res.data)
+    })
   }
 
   return (
@@ -83,22 +102,21 @@ export default function App() {
               currentPassword={currentPassword}
               handleLogin={handleLogin}
               handlePassword={handlePassword}
-              getCurrentUser={getCurrentUser}
-              user={user}
+              // getCurrentUser={getCurrentUser}
+              logout={logout}
             />
           </Route>
-          <Route path="/">
+          <PrivateRoute path="/">
             <Chat
               loginRequest={loginRequest}
               currentLogin={currentLogin}
               currentPassword={currentPassword}
               handleLogin={handleLogin}
               handlePassword={handlePassword}
-              getCurrentUser={getCurrentUser}
-              user={user}
-              loginRequest={logoutRequest}
+              // getCurrentUser={getCurrentUser}
+              logout={logout}
             />
-          </Route>
+          </PrivateRoute>
         </Switch>
       </div>
     </Router>
@@ -106,28 +124,54 @@ export default function App() {
 }
 
 function Login(props) {
-
   return (
     <div>
       <h2>Enter your login and password</h2>
       <form onSubmit={props.loginRequest}>
-        <input type='text' value={props.currentLogin} onChange={e => props.handleLogin(e)} placeholder='Enter your login' autoFocus />
-        <input type='text' value={props.currentPassword} onChange={e => props.handlePassword(e)} placeholder='Enter your password' />
-        <button onSubmit={props.loginRequest}>Login</button>{console.log(props.currentLogin)} {console.log(props.user)}
-        <button onSubmit={props.logoutRequest}>Logout</button>
+        <input
+          type="text"
+          value={props.currentLogin}
+          onChange={e => props.handleLogin(e)}
+          placeholder="Enter your login"
+          autoFocus
+        />
+        <input
+          type="password"
+          value={props.currentPassword}
+          onChange={e => props.handlePassword(e)}
+          placeholder="Enter your password"
+        />
+        <button onSubmit={props.loginRequest}>Login</button>
       </form>
+      <button onClick={props.logout}>logout</button>
     </div>
   )
 }
 
 function Chat(props) {
-  useEffect(() => {
-    props.loginRequest()
-  })
-
   return (
     <div>
       <h2>Let`s talk</h2>
     </div>
+  )
+}
+
+function PrivateRoute({ children, ...rest }) {
+  return (
+    <Route
+      {...rest}
+      render={({ location }) =>
+        user ? (
+          children
+        ) : (
+          <Redirect
+            to={{
+              pathname: "/login",
+              state: { from: location }
+            }}
+          />
+        )
+      }
+    />
   )
 }
