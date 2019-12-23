@@ -21,11 +21,12 @@ export default function App() {
       password: currentPassword
     })
       .then(res => {
-        setCurrentLogin('')
-        setCurrentPassword('')
         console.log(res)
         console.log(res.data)
       })
+    setCurrentLogin('')
+    setCurrentPassword('')
+
   }
 
   const getCurrentUser = () => {
@@ -35,7 +36,7 @@ export default function App() {
     })
       .then(res => {
         console.log(res)
-        setUser(res.data)
+        setUser(undefined)
       })
   }
 
@@ -95,6 +96,7 @@ export default function App() {
               handlePassword={handlePassword}
               getCurrentUser={getCurrentUser}
               user={user}
+              loginRequest={logoutRequest}
             />
           </Route>
         </Switch>
@@ -112,6 +114,7 @@ function Login(props) {
         <input type='text' value={props.currentLogin} onChange={e => props.handleLogin(e)} placeholder='Enter your login' autoFocus />
         <input type='text' value={props.currentPassword} onChange={e => props.handlePassword(e)} placeholder='Enter your password' />
         <button onSubmit={props.loginRequest}>Login</button>{console.log(props.currentLogin)} {console.log(props.user)}
+        <button onSubmit={props.logoutRequest}>Logout</button>
       </form>
     </div>
   )
