@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react"
-import { Chat } from './Chat';
-import { Login } from './Login';
-import * as tokenService from './tokenService';
-import HOST from "constants"
+import { Chat } from "./Chat"
+import { Login } from "./Login"
+import * as tokenService from "./tokenService"
+import { HOST } from "./constants"
 
 import {
   BrowserRouter as Router,
@@ -17,7 +17,7 @@ import io from "socket.io-client"
 import "./App.css"
 
 let user = undefined
-const socket = io(HOST)
+// const socket = io(HOST)
 
 const getToken = () => localStorage.getItem("token")
 const setToken = token => localStorage.setItem("token", token)
@@ -26,7 +26,6 @@ const removeToken = () => localStorage.removeItem("token")
 export default function App() {
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
-
 
   const getAndSetUser = () => {
     const token = getToken()
@@ -40,10 +39,11 @@ export default function App() {
     getAndSetUser()
   })
 
-  if (!user)
-  socket.emit('login', { user })
+  // if (!user)
+  // socket.emit('login', { user })
 
   const loginRequest = e => {
+    console.log(HOST)
     e.preventDefault()
     axios
       .post(`${HOST}/auth/login`, {
@@ -58,7 +58,8 @@ export default function App() {
     setCurrentPassword("")
   }
 
-  const logout = () => {
+  const logout = e => {
+    e.preventDefault()
     removeToken()
     user = undefined
   }
@@ -121,16 +122,13 @@ function PrivateRoute({ children, ...rest }) {
     <Route
       {...rest}
       render={({ location }) => {
-        const token = tokenService.getToken();
+        const token = tokenService.getToken()
         if (!token) {
           return <Redirect to="/login" />
         }
 
-        return children;
-
-
+        return children
       }}
     />
   )
 }
-
