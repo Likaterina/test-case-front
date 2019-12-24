@@ -9,12 +9,22 @@ import {
 import axios from "axios"
 import "./App.css"
 import { decode } from "jsonwebtoken"
+import io from "socket.io-client"
 
 let user = undefined
+
+const socket = io('http://localhost:3228')
 
 export default function App() {
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
+  const [users, setUsers] = useState({})
+
+  socket.on("broadcast", data => {
+    console.log(data)
+    setUsers(data.description)
+  })
+  console.log(users)
 
   const getToken = () => localStorage.getItem("token")
   const setToken = token => localStorage.setItem("token", token)
@@ -25,6 +35,12 @@ export default function App() {
     if (token) {
       user = decode(token)
     }
+    console.log(user)
+  }
+  
+  if (user !== undefined) {
+    console.log(user._id)
+  socket.emit('online', { userId: user._id })
   }
 
   useEffect(() => {
@@ -68,17 +84,6 @@ export default function App() {
 
   const handlePassword = e => {
     setCurrentPassword(e.target.value)
-  }
-
-  const sendRequest = () => {}
-
-  const logoutRequest = event => {
-    event.preventDefault()
-
-    axios.delete(`http://localhost:3228/auth/logout`).then(res => {
-      console.log(res)
-      console.log(res.data)
-    })
   }
 
   return (
@@ -149,9 +154,27 @@ function Login(props) {
 }
 
 function Chat(props) {
+  
+
+
+  const sendMessage = e => {
+    e.preventDefault()
+    socket.emit("chat message")
+  }
+
+  socket.on('chat message', msg => {
+    
+  })
+
+
+
   return (
     <div>
       <h2>Let`s talk</h2>
+      <form>
+        <input type="text" />
+        <button onSubmit={e => sendMessage(e)}>Send</button>
+      </form>
     </div>
   )
 }
@@ -164,13 +187,13 @@ function PrivateRoute({ children, ...rest }) {
         user ? (
           children
         ) : (
-          <Redirect
-            to={{
-              pathname: "/login",
-              state: { from: location }
-            }}
-          />
-        )
+            <Redirect
+              to={{
+                pathname: "/login",
+                state: { from: location }
+              }}
+            />
+          )
       }
     />
   )
