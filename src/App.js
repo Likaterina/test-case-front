@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Chat } from './Chat';
 import { Login } from './Login';
 import * as tokenService from './tokenService';
+import HOST from "constants"
 
 import {
   BrowserRouter as Router,
@@ -13,13 +14,10 @@ import {
 import axios from "axios"
 import { decode } from "jsonwebtoken"
 import io from "socket.io-client"
-
 import "./App.css"
 
 let user = undefined
-
-const HOST = 'http://localhost:3228';
-
+const socket = io(HOST)
 
 const getToken = () => localStorage.getItem("token")
 const setToken = token => localStorage.setItem("token", token)
@@ -28,13 +26,6 @@ const removeToken = () => localStorage.removeItem("token")
 export default function App() {
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
-  const [users, setUsers] = useState({})
-
-  // socket.on("broadcast", data => {
-  //   console.log(data)
-  //   setUsers(data)
-  // })
-  // console.log(users)
 
 
   const getAndSetUser = () => {
@@ -45,10 +36,12 @@ export default function App() {
     console.log(user)
   }
 
+  useEffect(() => {
+    getAndSetUser()
+  })
 
-  // useEffect(() => {
-  //   getAndSetUser()
-  // })
+  if (!user)
+  socket.emit('login', { user })
 
   const loginRequest = e => {
     e.preventDefault()
@@ -115,7 +108,7 @@ export default function App() {
             />
           </Route>
           <PrivateRoute path="/">
-            <Chat />
+            <Chat logout={logout} />
           </PrivateRoute>
         </Switch>
       </div>
@@ -128,7 +121,7 @@ function PrivateRoute({ children, ...rest }) {
     <Route
       {...rest}
       render={({ location }) => {
-        const token = tokenService.getToken(); 
+        const token = tokenService.getToken();
         if (!token) {
           return <Redirect to="/login" />
         }

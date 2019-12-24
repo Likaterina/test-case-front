@@ -19,7 +19,7 @@ export const Login = (props) => {
             type="text"
             value={props.currentLogin}
             onChange={props.handleLogin}
-            placeholder="Enter your logi 1n"
+            placeholder="Enter your login"
             autoFocus
           />
           <input
@@ -30,7 +30,7 @@ export const Login = (props) => {
           />
           <button onSubmit={props.loginRequest}>Login</button>
         </form>
-        <button onClick={props.logout}>logout</button>
+
       </div>
     )
   }
