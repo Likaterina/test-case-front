@@ -3,9 +3,9 @@ import { Chat } from "./Chat"
 import { Login } from "./Login"
 import * as tokenService from "./tokenService"
 import { HOST } from "./constants"
-import  { createBrowserHistory }  from 'history'
 
 import {
+  useHistory,
   BrowserRouter as Router,
   Switch,
   Route,
@@ -17,27 +17,24 @@ import { decode } from "jsonwebtoken"
 import io from "socket.io-client"
 import "./App.css"
 
-let user = undefined
-// const socket = io(HOST)
-const history = createBrowserHistory() 
-
-
 
 export default function App() {
+  const [user, setUser] = useState(undefined)
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
+  let history = useHistory();
 
   const getAndSetUser = () => {
     const token = tokenService.getToken()
     if (token) {
-      user = decode(token)
+      setUser(decode(token))
     }
     console.log(user)
   }
 
   useEffect(() => {
     getAndSetUser()
-  })
+  }, [])
 
   // if (!user)
   // socket.emit('login', { user })
@@ -52,7 +49,8 @@ export default function App() {
       })
       .then(res => {
         tokenService.setToken(res.data.token)
-        getAndSetUser()
+        getAndSetUser();
+        window.location.replace('/')
       })
     setCurrentLogin("")
     setCurrentPassword("")
@@ -61,7 +59,8 @@ export default function App() {
   const logout = () => {
     console.log('logout')
     tokenService.removeToken();     
-    user = undefined
+    setUser(undefined)
+    history.push('/login')
   }
 
   // const getCurrentUser = () => {
@@ -84,7 +83,6 @@ export default function App() {
   }
 
   return (
-    <Router >
       <div>
         <ul>
           <li>
@@ -109,11 +107,10 @@ export default function App() {
             />
           </Route>
           <PrivateRoute path="/">
-            <Chat logout={logout} history={history}/>
+            <Chat logout={logout} />
           </PrivateRoute>
         </Switch>
       </div>
-    </Router>
   )
 }
 
