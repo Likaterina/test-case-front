@@ -3,6 +3,7 @@ import { Chat } from "./Chat"
 import { Login } from "./Login"
 import * as tokenService from "./tokenService"
 import { HOST } from "./constants"
+import  { createBrowserHistory }  from 'history'
 
 import {
   BrowserRouter as Router,
@@ -18,17 +19,16 @@ import "./App.css"
 
 let user = undefined
 // const socket = io(HOST)
+const history = createBrowserHistory() 
 
-const getToken = () => localStorage.getItem("token")
-const setToken = token => localStorage.setItem("token", token)
-const removeToken = () => localStorage.removeItem("token")
+
 
 export default function App() {
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
 
   const getAndSetUser = () => {
-    const token = getToken()
+    const token = tokenService.getToken()
     if (token) {
       user = decode(token)
     }
@@ -51,16 +51,16 @@ export default function App() {
         password: currentPassword
       })
       .then(res => {
-        setToken(res.data.token)
+        tokenService.setToken(res.data.token)
         getAndSetUser()
       })
     setCurrentLogin("")
     setCurrentPassword("")
   }
 
-  const logout = e => {
-    e.preventDefault()
-    removeToken()
+  const logout = () => {
+    console.log('logout')
+    tokenService.removeToken();     
     user = undefined
   }
 
@@ -84,7 +84,7 @@ export default function App() {
   }
 
   return (
-    <Router>
+    <Router >
       <div>
         <ul>
           <li>
@@ -109,7 +109,7 @@ export default function App() {
             />
           </Route>
           <PrivateRoute path="/">
-            <Chat logout={logout} />
+            <Chat logout={logout} history={history}/>
           </PrivateRoute>
         </Switch>
       </div>
@@ -126,7 +126,6 @@ function PrivateRoute({ children, ...rest }) {
         if (!token) {
           return <Redirect to="/login" />
         }
-
         return children
       }}
     />

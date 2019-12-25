@@ -2,6 +2,7 @@ import React, { useState, useEffect, useImperativeHandle } from "react"
 import io from "socket.io-client"
 import { HOST } from "./constants"
 
+
 import * as tokenService from "./tokenService"
 
 export const Chat = props => {
@@ -20,6 +21,7 @@ export const Chat = props => {
         token
       }
     })
+    console.log(token)
     setSocket(socket)
   }, [])
 
@@ -41,18 +43,23 @@ export const Chat = props => {
 
   const sendMessage = () => {
     socket.emit("message", { text: message })
+    setMessage('')
   }
 
   const handleMessage = e => {
     setMessage(e.target.value)
   }
+  
 
   return (
+
     <div>
       <h2>Let`s talk</h2>
       <input type="text" value={message} onChange={handleMessage} />
       <button onClick={sendMessage}>Send</button>
-      <button onClick={props.logout}>logout</button>
+      <button onClick={() => {
+        props.logout()
+        props.history.push("/login")}}>logout</button>
       <ul>
         {messages.map((msg, index) => (
           <li key={index}>{msg.text}</li>
