@@ -14,15 +14,13 @@ import {
 } from "react-router-dom"
 import axios from "axios"
 import { decode } from "jsonwebtoken"
-import io from "socket.io-client"
 import "./App.css"
-
 
 export default function App() {
   const [user, setUser] = useState(undefined)
   const [currentLogin, setCurrentLogin] = useState("")
   const [currentPassword, setCurrentPassword] = useState("")
-  let history = useHistory();
+  let history = useHistory()
 
   const getAndSetUser = () => {
     const token = tokenService.getToken()
@@ -49,18 +47,18 @@ export default function App() {
       })
       .then(res => {
         tokenService.setToken(res.data.token)
-        getAndSetUser();
-        window.location.replace('/')
+        getAndSetUser()
+        window.location.replace("/")
       })
     setCurrentLogin("")
     setCurrentPassword("")
   }
 
   const logout = () => {
-    console.log('logout')
-    tokenService.removeToken();     
+    console.log("logout")
+    tokenService.removeToken()
     setUser(undefined)
-    history.push('/login')
+    history.push("/login")
   }
 
   // const getCurrentUser = () => {
@@ -83,34 +81,34 @@ export default function App() {
   }
 
   return (
-      <div>
-        <ul>
-          <li>
-            <Link to="/login">Login</Link>
-          </li>
-          <li>
-            <Link to="/">Chat</Link>
-          </li>
-        </ul>
+    <div>
+      <ul>
+        <li>
+          <Link to="/login">Login</Link>
+        </li>
+        <li>
+          <Link to="/">Chat</Link>
+        </li>
+      </ul>
 
-        <hr />
-        <Switch>
-          <Route exact path="/login">
-            <Login
-              loginRequest={loginRequest}
-              currentLogin={currentLogin}
-              currentPassword={currentPassword}
-              handleLogin={handleLogin}
-              handlePassword={handlePassword}
-              // getCurrentUser={getCurrentUser}
-              logout={logout}
-            />
-          </Route>
-          <PrivateRoute path="/">
-            <Chat logout={logout} />
-          </PrivateRoute>
-        </Switch>
-      </div>
+      <hr />
+      <Switch>
+        <Route exact path="/login">
+          <Login
+            loginRequest={loginRequest}
+            currentLogin={currentLogin}
+            currentPassword={currentPassword}
+            handleLogin={handleLogin}
+            handlePassword={handlePassword}
+            // getCurrentUser={getCurrentUser}
+            logout={logout}
+          />
+        </Route>
+        <PrivateRoute path="/">
+          <Chat logout={logout} />
+        </PrivateRoute>
+      </Switch>
+    </div>
   )
 }
 
