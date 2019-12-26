@@ -27,15 +27,13 @@ export default function App() {
     if (token) {
       setUser(decode(token))
     }
-    console.log(user)
+    
   }
 
   useEffect(() => {
     getAndSetUser()
+    console.log(user)
   }, [])
-
-  // if (!user)
-  // socket.emit('login', { user })
 
   const loginRequest = e => {
     console.log(HOST)
@@ -55,22 +53,12 @@ export default function App() {
   }
 
   const logout = () => {
+    console.log(user)
     console.log("logout")
     tokenService.removeToken()
     setUser(undefined)
     history.push("/login")
   }
-
-  // const getCurrentUser = () => {
-  //   axios
-  //     .get(`http://localhost:3228/auth/get-current-user`, {
-  //       headers: { Authorization: getToken() }
-  //     })
-  //     .then(res => {
-  //       console.log(res)
-  //       setUser(undefined)
-  //     })
-  // }
 
   const handleLogin = e => {
     setCurrentLogin(e.target.value)
@@ -100,12 +88,11 @@ export default function App() {
             currentPassword={currentPassword}
             handleLogin={handleLogin}
             handlePassword={handlePassword}
-            // getCurrentUser={getCurrentUser}
             logout={logout}
           />
         </Route>
         <PrivateRoute path="/">
-          <Chat logout={logout} />
+          <Chat logout={logout} currentUser={user}/>
         </PrivateRoute>
       </Switch>
     </div>

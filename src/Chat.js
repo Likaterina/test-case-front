@@ -4,20 +4,28 @@ import { HOST } from "./constants"
 
 import * as tokenService from "./tokenService"
 
+
+function messageReducer(state, action) {
+  switch (action.type) {
+    case 'add':
+      return state.concat(action.payload)
+    case 'set':
+      return action.payload;
+    default:
+      throw new Error();
+  }
+}
+
+
+
 export const Chat = props => {
-  const [users, addUser] = useReducer(
-    (users, newUser) => ({ ...users, ...newUser }),
-    {}
-  )
+  const [users, setOnlineUsers] = useState([]);
   const [socket, setSocket] = useState(null)
-  const [messages, addMessages] = useReducer(
-    (messages, newMessages) => [...messages, ...newMessages],
-    []
-  )
-  const [message, setMessage] = useState("")
+  const [message, setMessage] = useState("");
+
+  const [messages, dispatch] = useReducer(messageReducer, []);
 
   useEffect(() => {
-    console.log("this fucking effect")
     const token = tokenService.getToken()
 
     if (!token) return
@@ -28,21 +36,26 @@ export const Chat = props => {
       }
     })
 
-    socket.on("allMessages", allMessages => {
-      addMessages(allMessages)
+    socket.on("allMessages", (payload) => {
+      dispatch({
+        type: 'set',
+        payload
+      })
     })
 
-    socket.on("broadcast", data => {
-      addUser(data)
+    socket.on("message", (payload) => {
+      dispatch({
+        type: 'add',
+        payload
+      })
     })
 
-    socket.on("message", msg => {
-      console.log("message received", msg)
-      addMessages([msg])
-    })
+    socket.on("broadcast", setOnlineUsers)
 
     setSocket(socket)
   }, [])
+
+
 
   const sendMessage = () => {
     if (message && message.trim()) {
@@ -57,19 +70,32 @@ export const Chat = props => {
 
   const showUsers = () =>
     Object.keys(users)
-      .filter(key => users[key].online)
-      .map((key, index) => <li key={index}>{users[key].login}</li>)
+      .map(key => {
+        const user = users[key]
+        return (
+          <li key={user._id}>{user.login}
+            {props.currentUser.isAdmin && !user.isAdmin && (
+              <button>Ban</button>
+            )}
+          </li>
+        )
+      })
+
 
   return (
     <div>
       <h2>Let`s talk</h2>
       <input type="text" value={message} onChange={handleMessage} />
       <button onClick={sendMessage}>Send</button>
-      <button onClick={props.logout}>logout</button>
+      <button onClick={(e) => {
+        socket.disconnect()
+        props.logout(e)
+      }}>logout</button>
       <ul>
-        {messages.map((msg, index) => (
-          <li key={index}>{msg.text}</li>
-        ))}
+        {messages.map((msg) => {
+           return <li key={msg._id}>{msg.userName}: {msg.text}</li>
+              })
+            }
       </ul>
       <h2>Online</h2>
       <ul>{showUsers()}</ul>
