@@ -26,6 +26,8 @@ export const Chat = props => {
   const [messages, dispatch] = useReducer(messageReducer, []);
 
   useEffect(() => {
+
+
     const token = tokenService.getToken()
 
     if (!token) return
@@ -51,13 +53,13 @@ export const Chat = props => {
     })
 
     socket.on("broadcast", setOnlineUsers)
-
+    
     setSocket(socket)
   }, [])
 
 
-
   const sendMessage = () => {
+    console.log(users)
     if (message && message.trim()) {
       socket.emit("message", { text: message })
       setMessage("")
@@ -68,15 +70,26 @@ export const Chat = props => {
     setMessage(e.target.value)
   }
 
+  const bunUser = () => {
+
+  }
+
+  const muteUser = (user) => {
+    console.log(users)
+    socket.emit("muteUser", user)
+  }
+
   const showUsers = () =>
     Object.keys(users)
       .map(key => {
         const user = users[key]
         return (
           <li key={user._id}>{user.login}
-            {props.currentUser.isAdmin && !user.isAdmin && (
-              <button>Ban</button>
-            )}
+            {props.currentUser.isAdmin && !user.isAdmin && <div>
+              <button>Bun</button>
+              <button onClick={muteUser(user)}>Mute</button>
+            </div>
+            }
           </li>
         )
       })
@@ -93,9 +106,9 @@ export const Chat = props => {
       }}>logout</button>
       <ul>
         {messages.map((msg) => {
-           return <li key={msg._id}>{msg.userName}: {msg.text}</li>
-              })
-            }
+          return <li key={msg._id}>{msg.userName}: {msg.text}</li>
+        })
+        }
       </ul>
       <h2>Online</h2>
       <ul>{showUsers()}</ul>
