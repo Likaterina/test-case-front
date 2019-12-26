@@ -4,30 +4,25 @@ import { HOST } from "./constants"
 
 import * as tokenService from "./tokenService"
 
-
-function messageReducer(state, action) {
+const messageReducer = (state, action) => {
   switch (action.type) {
-    case 'add':
+    case "add":
       return state.concat(action.payload)
-    case 'set':
-      return action.payload;
+    case "set":
+      return action.payload
     default:
-      throw new Error();
+      throw new Error()
   }
 }
 
-
-
 export const Chat = props => {
-  const [users, setOnlineUsers] = useState([]);
+  const [users, setOnlineUsers] = useState([])
   const [socket, setSocket] = useState(null)
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("")
 
-  const [messages, dispatch] = useReducer(messageReducer, []);
+  const [messages, dispatchMessages] = useReducer(messageReducer, [])
 
   useEffect(() => {
-
-
     const token = tokenService.getToken()
 
     if (!token) return
@@ -38,25 +33,27 @@ export const Chat = props => {
       }
     })
 
-    socket.on("allMessages", (payload) => {
-      dispatch({
-        type: 'set',
+    socket.on("allMessages", payload => {
+      dispatchMessages({
+        type: "set",
         payload
       })
     })
 
-    socket.on("message", (payload) => {
-      dispatch({
-        type: 'add',
+    socket.on("message", payload => {
+      dispatchMessages({
+        type: "add",
         payload
       })
     })
 
-    socket.on("broadcast", setOnlineUsers)
-    
+    socket.on("sendAllUsers", users => {
+      console.log("accepting")
+      setOnlineUsers(users)
+    })
+
     setSocket(socket)
   }, [])
-
 
   const sendMessage = () => {
     console.log(users)
@@ -70,45 +67,63 @@ export const Chat = props => {
     setMessage(e.target.value)
   }
 
-  const bunUser = () => {
-
-  }
-
-  const muteUser = (user) => {
-    console.log(users)
+  const muteUser = user => {
     socket.emit("muteUser", user)
   }
 
-  const showUsers = () =>
-    Object.keys(users)
-      .map(key => {
-        const user = users[key]
-        return (
-          <li key={user._id}>{user.login}
-            {props.currentUser.isAdmin && !user.isAdmin && <div>
-              <button>Bun</button>
-              <button onClick={muteUser(user)}>Mute</button>
-            </div>
-            }
-          </li>
-        )
-      })
+  const unmuteUser = user => {
+    socket.emit("unmuteUser", user)
+  }
 
+  const banUser = user => {
+    socket.emit("banUser", user)
+  }
+
+  const showUsers = () =>
+    Object.keys(users).map(key => {
+      const user = users[key]
+      return (
+        <li key={user._id}>
+          {user.login}
+          {props.currentUser.isAdmin && !user.isAdmin && (
+            <div>
+              <button onClick={() => banUser(user)}>Ban</button>
+              {!user.isMuted ? (
+                <button onClick={() => muteUser(user)}>
+                  Mute{console.log(user)}
+                </button>
+              ) : (
+                <button onClick={() => unmuteUser(user)}>
+                  Unmute{console.log(user)}
+                </button>
+              )}
+            </div>
+          )}
+        </li>
+      )
+    })
 
   return (
     <div>
       <h2>Let`s talk</h2>
       <input type="text" value={message} onChange={handleMessage} />
       <button onClick={sendMessage}>Send</button>
-      <button onClick={(e) => {
-        socket.disconnect()
-        props.logout(e)
-      }}>logout</button>
+      <button
+        onClick={e => {
+          socket.disconnect()
+          props.logout(e)
+        }}
+      >
+        logout
+      </button>
       <ul>
-        {messages.map((msg) => {
-          return <li key={msg._id}>{msg.userName}: {msg.text}</li>
-        })
-        }
+        {messages.map(msg => {
+          return (
+            <li key={msg._id}>
+              {msg.userName}: {msg.text}
+            </li>
+          )
+        })}
       </ul>
       <h2>Online</h2>
       <ul>{showUsers()}</ul>
